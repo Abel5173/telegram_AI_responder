@@ -3,7 +3,9 @@ import os
 import unittest
 from unittest.mock import patch
 from ai import ollama_generate, get_context_for_ollama, generate_response
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')
+))
 
 
 class TestAI(unittest.TestCase):
@@ -17,7 +19,7 @@ class TestAI(unittest.TestCase):
     def test_ollama_generate_failure(self, mock_post):
         self.assertIn('Sorry', ollama_generate('Hello'))
 
-    @patch('ai.get_last_n_messages', 
+    @patch('ai.get_last_n_messages',
            return_value=[('Hi', 'Hello!'), ('How are you?', "I'm good!")])
     def test_get_context_for_ollama(self, mock_history):
         context = get_context_for_ollama(1, 1, "What's up?")
@@ -28,7 +30,7 @@ class TestAI(unittest.TestCase):
         self.assertIn("User: What's up?", context)
 
     @patch('ai.ollama_generate', return_value="Ollama context reply")
-    @patch('ai.get_context_for_ollama', 
+    @patch('ai.get_context_for_ollama',
            return_value="User: Hi\nBot: Hello!\nUser: What's up?")
     def test_generate_response(self, mock_context, mock_ollama):
         response = generate_response(1, 1, "What's up?")
@@ -36,4 +38,4 @@ class TestAI(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main() 
+    unittest.main()

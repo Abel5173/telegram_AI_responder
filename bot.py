@@ -31,7 +31,6 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
-logger = logging.getLogger(__name__)
 
 # Initialize the Telegram bot
 if not TELEGRAM_TOKEN:
@@ -49,27 +48,6 @@ else:
     )
 
 # --- SQLite Chat History ---
-def init_db():
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
-                chat_id INTEGER,
-                sender TEXT,
-                message_text TEXT,
-                timestamp DATETIME
-            )
-        ''')
-        conn.commit()
-        conn.close()
-        logger.info("SQLite database initialized.")
-    except Exception as e:
-        logger.critical(f"Failed to initialize database: {e}", exc_info=True)
-        raise
-
 def store_message(user_id, chat_id, sender, message_text, timestamp=None):
     try:
         if timestamp is None:

@@ -85,4 +85,4 @@ def get_last_n_messages(user_id, chat_id, n=MAX_HISTORY):
         return context
     except Exception as e:
         logger.error(f"Failed to fetch chat history: {e}", exc_info=True)
-        return [] 
+        return []

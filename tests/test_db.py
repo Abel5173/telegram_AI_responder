@@ -2,7 +2,9 @@ import sys
 import os
 import unittest
 from db import init_db, store_message, get_last_n_messages
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')
+))
 
 
 class TestDB(unittest.TestCase):
@@ -38,4 +40,4 @@ class TestDB(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main() 
+    unittest.main()

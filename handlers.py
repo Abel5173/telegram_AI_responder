@@ -1,4 +1,4 @@
-from config import logger, RESPONSE_DELAY_SECONDS, MAX_HISTORY
+from config import logger, RESPONSE_DELAY_SECONDS
 from db import store_message
 from ai import generate_response
 import threading

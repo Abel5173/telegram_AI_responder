@@ -18,7 +18,7 @@ def ollama_generate(prompt: str) -> str:
         response.raise_for_status()
         result = response.json()
         return result.get(
-            "response", 
+            "response",
             "Sorry, I'm having trouble thinking right now."
         ).strip()
     except Exception as e:
@@ -45,4 +45,4 @@ def generate_response(user_id: int, chat_id: int, user_message: str) -> str:
     )
     response = ollama_generate(context)
     logger.info(f"Ollama response for user {user_id}: '{response}'")
-    return response 
+    return response
