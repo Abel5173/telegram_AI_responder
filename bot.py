@@ -1,14 +1,12 @@
 import os
 import logging
 import time
-import threading
 import requests
-import telebot
 import sqlite3
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from telebot import TeleBot
-from config import TELEGRAM_TOKEN, logger
+from config import logger
 from db import init_db
 from handlers import register_handlers
 
@@ -45,7 +43,10 @@ owner_id_int = 0
 if OWNER_USER_ID and OWNER_USER_ID.isdigit():
     owner_id_int = int(OWNER_USER_ID)
 else:
-    logger.warning("OWNER_USER_ID is not set or invalid. Bot will respond to all users.")
+    logger.warning(
+        "OWNER_USER_ID is not set or invalid. "
+        "Bot will respond to all users."
+    )
 
 # --- SQLite Chat History ---
 def init_db():
@@ -77,12 +78,15 @@ def store_message(user_id, chat_id, sender, message_text, timestamp=None):
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         c.execute(
-            "INSERT INTO messages (user_id, chat_id, sender, message_text, timestamp) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO messages (user_id, chat_id, sender, message_text, "
+            "timestamp) VALUES (?, ?, ?, ?, ?)",
             (user_id, chat_id, sender, message_text, timestamp)
         )
         conn.commit()
         conn.close()
-        logger.info(f"Stored message for user {user_id} in chat {chat_id} as {sender}.")
+        logger.info(
+            f"Stored message for user {user_id} in chat {chat_id} as {sender}."
+        )
     except Exception as e:
         logger.error(f"Failed to store message: {e}", exc_info=True)
 
@@ -113,7 +117,6 @@ def get_last_n_messages(user_id, chat_id, n=MAX_HISTORY):
             elif sender == 'bot':
                 bot_msgs.append(msg)
         # Interleave user/bot pairs, but keep only the last n
-        context_pairs = []
         # Reconstruct pairs from the end
         i = len(user_msgs) - 1
         j = len(bot_msgs) - 1
@@ -161,7 +164,10 @@ def ollama_generate(prompt: str) -> str:
         )
         response.raise_for_status()
         result = response.json()
-        return result.get("response", "Sorry, I'm having trouble thinking right now.").strip()
+        return result.get(
+            "response", 
+            "Sorry, I'm having trouble thinking right now."
+        ).strip()
     except Exception as e:
         logger.error(f"Ollama API error: {e}", exc_info=True)
         return "Sorry, I'm having trouble thinking right now."
@@ -169,7 +175,9 @@ def ollama_generate(prompt: str) -> str:
 # --- Generate Response ---
 def generate_response(user_id: int, chat_id: int, user_message: str) -> str:
     context = get_context_for_ollama(user_id, chat_id, user_message)
-    logger.info(f"Sending context to Ollama for user {user_id}: '{context}'")
+    logger.info(
+        f"Sending context to Ollama for user {user_id}: '{context}'"
+    )
     response = ollama_generate(context)
     logger.info(f"Ollama response for user {user_id}: '{response}'")
     return response
@@ -178,7 +186,9 @@ def generate_response(user_id: int, chat_id: int, user_message: str) -> str:
 if __name__ == "__main__":
     logger.info("Bot starting up...")
     if not owner_id_int:
-        logger.warning("OWNER_USER_ID is not set. The bot will respond to all users.")
+        logger.warning(
+            "OWNER_USER_ID is not set. The bot will respond to all users."
+        )
     init_db()
     max_backoff = 300  # 5 minutes
     backoff = 5
@@ -186,9 +196,11 @@ if __name__ == "__main__":
         try:
             logger.info("Starting the bot with infinity polling...")
             bot.infinity_polling(timeout=60, long_polling_timeout=60)
-        except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectionError) as e:
+        except (requests.exceptions.ReadTimeout, 
+                requests.exceptions.ConnectionError) as e:
             logger.error(
-                f"Network error during polling: {e}. Retrying in {backoff} seconds."
+                f"Network error during polling: {e}. "
+                f"Retrying in {backoff} seconds."
             )
             time.sleep(backoff)
             backoff = min(backoff * 2, max_backoff)

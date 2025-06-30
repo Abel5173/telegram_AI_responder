@@ -17,7 +17,10 @@ def ollama_generate(prompt: str) -> str:
         )
         response.raise_for_status()
         result = response.json()
-        return result.get("response", "Sorry, I'm having trouble thinking right now.").strip()
+        return result.get(
+            "response", 
+            "Sorry, I'm having trouble thinking right now."
+        ).strip()
     except Exception as e:
         logger.error(f"Ollama API error: {e}", exc_info=True)
         return "Sorry, I'm having trouble thinking right now."
@@ -37,7 +40,9 @@ def get_context_for_ollama(user_id, chat_id, user_message):
 def generate_response(user_id: int, chat_id: int, user_message: str) -> str:
     """Generate a response using Ollama with context."""
     context = get_context_for_ollama(user_id, chat_id, user_message)
-    logger.info(f"Sending context to Ollama for user {user_id}: '{context}'")
+    logger.info(
+        f"Sending context to Ollama for user {user_id}: '{context}'"
+    )
     response = ollama_generate(context)
     logger.info(f"Ollama response for user {user_id}: '{response}'")
     return response 

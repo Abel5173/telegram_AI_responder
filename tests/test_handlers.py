@@ -7,7 +7,9 @@ from handlers import (
     handle_back_command,
     handle_status_command,
 )
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')
+))
 
 
 class TestHandlers(unittest.TestCase):

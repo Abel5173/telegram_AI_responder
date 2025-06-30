@@ -34,12 +34,15 @@ def store_message(user_id, chat_id, sender, message_text, timestamp=None):
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         c.execute(
-            "INSERT INTO messages (user_id, chat_id, sender, message_text, timestamp) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO messages (user_id, chat_id, sender, message_text, "
+            "timestamp) VALUES (?, ?, ?, ?, ?)",
             (user_id, chat_id, sender, message_text, timestamp)
         )
         conn.commit()
         conn.close()
-        logger.info(f"Stored message for user {user_id} in chat {chat_id} as {sender}.")
+        logger.info(
+            f"Stored message for user {user_id} in chat {chat_id} as {sender}."
+        )
     except Exception as e:
         logger.error(f"Failed to store message: {e}", exc_info=True)
 
