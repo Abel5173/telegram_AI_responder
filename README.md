@@ -1,4 +1,4 @@
-[![CI](https://github.com/<your-username>/<repo-name>/actions/workflows/ci.yml/badge.svg)](https://github.com/<your-username>/<repo-name>/actions/workflows/ci.yml)
+[![CI](https://github.com/Abel5173/telegram_AI_responder/actions/workflows/ci.yml/badge.svg)](https://github.com/Abel5173/telegram_AI_responder/actions/workflows/ci.yml)
 
 # Personal Telegram Bot Responder
 
