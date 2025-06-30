@@ -1,3 +1,5 @@
+[![CI](https://github.com/<your-username>/<repo-name>/actions/workflows/ci.yml/badge.svg)](https://github.com/<your-username>/<repo-name>/actions/workflows/ci.yml)
+
 # Personal Telegram Bot Responder
 
 A modular, production-ready Telegram bot that uses [Ollama](https://ollama.com/) (Llama 3.1 8B) for AI-powered responses, with persistent chat history in SQLite, robust AFK/owner logic, and full Docker and test support.
@@ -44,7 +46,7 @@ Telegram <-> bot.py <-> handlers.py <-> ai.py <-> Ollama
 
 ### 1. Clone the Repository
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Abel5173/telegram_AI_responder.git
 cd personal_telegram_bot_responder
 ```
 
