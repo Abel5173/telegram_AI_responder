@@ -7,7 +7,7 @@ from handlers import (
     handle_afk_command,
     handle_back_command,
     handle_status_command,
-)
+)  # noqa: E402
 
 
 class TestHandlers(unittest.TestCase):
@@ -26,7 +26,8 @@ class TestHandlers(unittest.TestCase):
         self.assertTrue(self.OWNER_AFK[0])
         self.bot.reply_to.assert_called_with(
             message,
-            "AFK mode enabled. I'll cover your DMs after 15 seconds if you don't reply."
+            "AFK mode enabled. I'll cover your DMs after 15 seconds "
+            "if you don't reply."
         )
 
     def test_afk_command_non_owner(self):
