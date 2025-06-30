@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+
+# SQLite database
+chat_history.db
+
+# Test files
+*.test
+*.spec
+*.md
+*.log
+test_*.py 

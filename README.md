@@ -1,120 +1,141 @@
 # Personal Telegram Bot Responder
 
-This is a simple Telegram bot that uses the Hugging Face Inference API to automatically respond to direct messages when you are offline. It's designed to act as a personal assistant, keeping conversations going until you're available to reply yourself.
+A modular, production-ready Telegram bot that uses [Ollama](https://ollama.com/) (Llama 3.1 8B) for AI-powered responses, with persistent chat history in SQLite, robust AFK/owner logic, and full Docker and test support.
 
-The bot uses the `facebook/blenderbot-400M-distill` model for generating conversational responses.
+---
 
 ## Features
 
--   **Automatic Responses:** Responds to DMs when the owner is detected as "offline."
--   **Context-Aware:** Keeps track of the last 3 messages in each conversation for more relevant replies.
--   **Delayed Replies:** Waits 15 seconds before replying to feel more natural.
--   **Error Handling:** Gracefully handles API failures with a fallback message.
--   **Configurable:** All API keys and personal IDs are configured via a `.env` file.
+- **Automatic AFK Responses:**
+  - When the owner is AFK, the bot replies to DMs after a delay, using LLM-generated responses.
+- **Context-Aware AI:**
+  - Uses the last 3 user/bot message pairs for context, improving reply quality.
+- **Persistent Chat History:**
+  - All messages are stored in SQLite (`chat_history.db`).
+- **Owner Commands:**
+  - `/afk`, `/back`, `/status` for AFK mode and status control.
+- **Robust Error Handling:**
+  - Handles network, DB, and API errors gracefully, with exponential backoff for Telegram API issues.
+- **Modular Codebase:**
+  - Clean separation: `bot.py`, `handlers.py`, `ai.py`, `db.py`, `config.py`.
+- **Comprehensive Unit Tests:**
+  - For all core logic, using `pytest` and `unittest.mock`.
+- **Dockerized:**
+  - Easy to deploy anywhere with Docker.
+
+---
+
+## Architecture Overview
+
+```
+Telegram <-> bot.py <-> handlers.py <-> ai.py <-> Ollama
+                                 |-> db.py <-> SQLite
+                                 |-> config.py
+```
+- **bot.py:** Main entry, error handling, handler registration.
+- **handlers.py:** All Telegram command and message logic.
+- **ai.py:** Ollama (LLM) integration and context formatting.
+- **db.py:** SQLite chat history management.
+- **config.py:** Environment, constants, logging.
+
+---
 
 ## Getting Started
 
-Follow these instructions to get the bot up and running on your local machine for development and testing.
+### 1. Clone the Repository
+```bash
+git clone <your-repo-url>
+cd personal_telegram_bot_responder
+```
 
-### 1. Prerequisites
+### 2. Set Up Python Environment
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
--   Python 3.8 or newer.
--   A Telegram Bot Token from [BotFather](https://t.me/BotFather).
--   A Hugging Face User Access Token (API Key) with `read` permissions from your [Hugging Face account settings](https://huggingface.co/settings/tokens).
--   Your personal Telegram User ID. You can get this from a bot like [@userinfobot](https://t.me/userinfobot).
+### 3. Configure Environment Variables
+Create a `.env` file in the project root:
+```dotenv
+TELEGRAM_TOKEN=your_telegram_bot_token
+OWNER_USER_ID=your_telegram_user_id
+# Optional: override Ollama settings
+# OLLAMA_URL=http://localhost:11434/api/generate
+# OLLAMA_MODEL=llama3.1:8b
+```
+- Get your bot token from [@BotFather](https://t.me/BotFather).
+- Get your user ID from [@userinfobot](https://t.me/userinfobot).
 
-### 2. Installation & Setup
+### 4. Start Ollama (Llama 3.1 8B)
+- [Install Ollama](https://ollama.com/download) and pull the model:
+  ```bash
+  ollama pull llama3.1:8b
+  ollama serve
+  ```
+- Ensure Ollama is running and accessible at the URL in your `.env` (default: `http://localhost:11434/api/generate`).
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <your-repo-url>
-    cd personal_telegram_bot_responder
-    ```
-
-2.  **Create a virtual environment and activate it:**
-    ```bash
-    python3 -m venv venv
-    source venv/bin/activate
-    ```
-
-3.  **Install the required dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-4.  **Create a `.env` file:**
-    Create a file named `.env` in the root of the project and add your API keys and User ID.
-
-    ```dotenv
-    # Telegram Bot API Token from BotFather
-    TELEGRAM_TOKEN="YOUR_TELEGRAM_TOKEN"
-
-    # Hugging Face API Key from your Hugging Face account
-    HF_API_KEY="YOUR_HUGGING_FACE_API_KEY"
-
-    # Your personal Telegram User ID
-    OWNER_USER_ID="YOUR_TELEGRAM_USER_ID"
-    ```
-
-### 3. Running the Bot Locally
-
-To start the bot, simply run the `bot.py` script from your terminal:
-
+### 5. Run the Bot
 ```bash
 python bot.py
 ```
 
-The bot will start polling for new messages. You can stop it by pressing `Ctrl+C`.
+---
 
-## Deployment to Hugging Face Spaces
+## Docker Deployment
 
-You can deploy this bot for free on [Hugging Face Spaces](https://huggingface.co/spaces).
+### 1. Build the Docker Image
+```bash
+docker build -t telegram-bot .
+```
 
-1.  **Create a new Space:**
-    -   Go to [huggingface.co/new-space](https://huggingface.co/new-space).
-    -   Give it a name and select **Docker** > **Blank** as the Space SDK.
-    -   Choose the free "CPU basic" hardware.
-    -   Create the Space.
+### 2. Run the Container
+```bash
+docker run --env-file .env -v $(pwd)/chat_history.db:/app/chat_history.db telegram-bot
+```
+- `--env-file .env`: Loads your environment variables.
+- `-v $(pwd)/chat_history.db:/app/chat_history.db`: Persists chat history outside the container.
 
-2.  **Upload your files:**
-    -   Upload `bot.py`, `requirements.txt`, and `.gitignore`. You can do this via the web interface or by cloning the Space's Git repository.
+### 3. (Optional) Use Docker Compose
+Create a `docker-compose.yml` for easier multi-service management (Ollama + bot).
 
-3.  **Create a `Dockerfile`:**
-    -   In your Hugging Face Space, create a new file named `Dockerfile` with the following content:
+---
 
-    ```dockerfile
-    FROM python:3.9-slim
+## Testing
 
-    WORKDIR /code
+### 1. Run All Unit Tests
+```bash
+pytest tests/
+```
+- Tests cover all core logic: database, AI, and handler logic.
+- No real Telegram or Ollama calls are made during unit tests.
 
-    COPY ./requirements.txt /code/requirements.txt
+### 2. Linting (Optional)
+```bash
+pip install flake8
+flake8 .
+```
 
-    RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+---
 
-    COPY ./bot.py /code/bot.py
+## Troubleshooting
 
-    CMD ["python", "/code/bot.py"]
-    ```
+- **Bot does not reply:**
+  - Check that your `.env` is correct and Ollama is running.
+  - Check logs for errors (network, DB, or API issues).
+- **Docker: DNS or network errors:**
+  - Add `--dns=8.8.8.8` to your `docker run` command if needed.
+- **Unit tests fail to import modules:**
+  - Ensure you run `pytest` from the project root, or use the provided `sys.path` fix in test files.
+- **Integration testing:**
+  - Integration tests are not included by default due to Python 3.12 compatibility issues with `python-telegram-bot` v13.x. See README history for details.
 
-4.  **Add your secrets:**
-    -   In your Space's settings, navigate to the **Secrets** section.
-    -   Add your `TELEGRAM_TOKEN`, `HF_API_KEY`, and `OWNER_USER_ID` as secrets. These will be securely injected as environment variables.
+---
 
-The Space will automatically build and run your bot. Check the logs on the Space's page to see the bot's status.
+## Contributing
+- PRs and issues are welcome! Please add tests for new features.
 
-## Next Steps and Enhancements
+---
 
-This bot is a great starting point. Here are a few ideas for taking it to the next level:
-
--   **Improve Offline Detection:** The current `is_owner_online()` function always returns `False`. You could improve this by:
-    -   Checking your Telegram presence using a user-bot library (can be complex).
-    -   Creating commands like `/afk` and `/online` for you (the owner) to manually set your status.
-    -   Connecting it to an external service like IFTTT or a calendar to know when you're busy.
-
--   **Add Commands:**
-    -   Create a `/clear` command to wipe the conversation history for a user.
-    -   Create a `/status` command to check if the bot is running and the owner's status.
-
--   **Use a Database:** The current chat history is stored in memory, so it will be lost if the bot restarts. You could use a simple database like `SQLite` or a cloud-based one to persist conversations.
-
--   **Try Different Models:** Experiment with other conversational models on the Hugging Face Hub. Simply change the `MODEL_ID` constant in `bot.py`. 
+## License
+MIT 

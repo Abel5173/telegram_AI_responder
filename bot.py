@@ -1,12 +1,16 @@
 import os
 import logging
 import time
-from collections import defaultdict
-from typing import Dict, List
-
+import threading
+import requests
 import telebot
+import sqlite3
+from datetime import datetime, timezone
 from dotenv import load_dotenv
-from huggingface_hub import InferenceClient
+from telebot import TeleBot
+from config import TELEGRAM_TOKEN, logger
+from db import init_db
+from handlers import register_handlers
 
 # --- Configuration ---
 # Load environment variables from .env file
@@ -14,13 +18,14 @@ load_dotenv()
 
 # Get API keys from environment variables
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-HF_API_KEY = os.getenv("HF_API_KEY")
 OWNER_USER_ID = os.getenv("OWNER_USER_ID")
 
 # --- Constants ---
-MODEL_ID = "facebook/blenderbot-400M-distill"
 MAX_HISTORY = 3  # Number of past messages to keep for context
-RESPONSE_DELAY_SECONDS = 15
+RESPONSE_DELAY_SECONDS = 15  # 15-second delay
+OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_MODEL = "llama3.1:8b"
+DB_PATH = "chat_history.db"
 
 # --- Setup ---
 # Basic logging configuration
@@ -33,7 +38,7 @@ logger = logging.getLogger(__name__)
 # Initialize the Telegram bot
 if not TELEGRAM_TOKEN:
     raise ValueError("TELEGRAM_TOKEN environment variable not set!")
-bot = telebot.TeleBot(TELEGRAM_TOKEN)
+bot = TeleBot(TELEGRAM_TOKEN)
 
 # Convert Owner ID to integer for comparison
 owner_id_int = 0
@@ -42,119 +47,152 @@ if OWNER_USER_ID and OWNER_USER_ID.isdigit():
 else:
     logger.warning("OWNER_USER_ID is not set or invalid. Bot will respond to all users.")
 
-# Initialize the Hugging Face Inference Client
-if not HF_API_KEY:
-    raise ValueError("HF_API_KEY environment variable not set!")
-hf_client = InferenceClient(token=HF_API_KEY)
-
-# In-memory chat history storage
-# defaultdict allows us to create a new list for a user if they don't exist yet
-chat_history: Dict[int, Dict[str, List[str]]] = defaultdict(
-    lambda: {"past_user_inputs": [], "generated_responses": []}
-)
-
-
-# --- Helper Functions ---
-def is_owner_online() -> bool:
-    """
-    Placeholder function to check if the bot owner is online.
-    For this example, we assume the owner is always offline.
-    In a real-world scenario, you might check Telegram's presence,
-    a status from another API, or a flag in a database.
-    """
-    return False
-
-
-def generate_response(user_id: int, user_message: str) -> str:
-    """
-    Generates a response using the Hugging Face Inference API.
-    """
-    # Retrieve conversation history for the user
-    history = chat_history.get(user_id)
-    if not history:
-        past_user_inputs = []
-        generated_responses = []
-    else:
-        past_user_inputs = history["past_user_inputs"]
-        generated_responses = history["generated_responses"]
-
+# --- SQLite Chat History ---
+def init_db():
     try:
-        # Use the conversational task
-        response_text = hf_client.conversational(
-            user_message,
-            past_user_inputs=past_user_inputs,
-            generated_responses=generated_responses,
-            model=MODEL_ID,
-        )
-        return response_text['generated_text']
-
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                chat_id INTEGER,
+                sender TEXT,
+                message_text TEXT,
+                timestamp DATETIME
+            )
+        ''')
+        conn.commit()
+        conn.close()
+        logger.info("SQLite database initialized.")
     except Exception as e:
-        logger.error(f"Hugging Face API error: {e}")
-        return "I'm sorry, I'm having a little trouble thinking right now. Please try again later."
+        logger.critical(f"Failed to initialize database: {e}", exc_info=True)
+        raise
 
+def store_message(user_id, chat_id, sender, message_text, timestamp=None):
+    try:
+        if timestamp is None:
+            # Use timezone-aware UTC datetime
+            timestamp = datetime.now(timezone.utc).isoformat()
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute(
+            "INSERT INTO messages (user_id, chat_id, sender, message_text, timestamp) VALUES (?, ?, ?, ?, ?)",
+            (user_id, chat_id, sender, message_text, timestamp)
+        )
+        conn.commit()
+        conn.close()
+        logger.info(f"Stored message for user {user_id} in chat {chat_id} as {sender}.")
+    except Exception as e:
+        logger.error(f"Failed to store message: {e}", exc_info=True)
 
-def update_chat_history(user_id: int, user_message: str, bot_response: str):
-    """
-    Updates the chat history for a given user, keeping it within the MAX_HISTORY limit.
-    """
-    history = chat_history[user_id]
-    history["past_user_inputs"].append(user_message)
-    history["generated_responses"].append(bot_response)
+def get_last_n_messages(user_id, chat_id, n=MAX_HISTORY):
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute(
+            """
+            SELECT sender, message_text FROM messages
+            WHERE user_id = ? AND chat_id = ?
+            ORDER BY timestamp DESC, id DESC
+            LIMIT ?
+            """,
+            (user_id, chat_id, n * 2)  # Fetch more in case of alternating user/bot
+        )
+        rows = c.fetchall()
+        conn.close()
+        # Reverse to chronological order
+        rows = rows[::-1]
+        # Only keep the last n user/bot pairs
+        context = []
+        user_msgs = []
+        bot_msgs = []
+        for sender, msg in rows:
+            if sender == 'user':
+                user_msgs.append(msg)
+            elif sender == 'bot':
+                bot_msgs.append(msg)
+        # Interleave user/bot pairs, but keep only the last n
+        context_pairs = []
+        # Reconstruct pairs from the end
+        i = len(user_msgs) - 1
+        j = len(bot_msgs) - 1
+        pairs = []
+        while i >= 0 and j >= 0 and len(pairs) < n:
+            pairs.append((user_msgs[i], bot_msgs[j]))
+            i -= 1
+            j -= 1
+        pairs = pairs[::-1]
+        for user_msg, bot_msg in pairs:
+            context.append((user_msg, bot_msg))
+        return context
+    except Exception as e:
+        logger.error(f"Failed to fetch chat history: {e}", exc_info=True)
+        return []
 
-    # Trim history to the maximum length
-    history["past_user_inputs"] = history["past_user_inputs"][-MAX_HISTORY:]
-    history["generated_responses"] = history["generated_responses"][-MAX_HISTORY:]
+def get_context_for_ollama(user_id, chat_id, user_message):
+    context_pairs = get_last_n_messages(user_id, chat_id, MAX_HISTORY)
+    context_parts = []
+    for user_input, bot_response in context_pairs:
+        context_parts.append(f"User: {user_input}")
+        context_parts.append(f"Bot: {bot_response}")
+    context_parts.append(f"User: {user_message}")
+    return "\n".join(context_parts)
 
+# --- AFK Status and Owner Reply Tracking ---
+OWNER_AFK = [True]  # Use list for mutability in handlers
+# Track last message time from owner per chat
+last_owner_reply = {}
 
-# --- Telegram Bot Handlers ---
-@bot.message_handler(chat_types=['private'], func=lambda message: True)
-def handle_message(message: telebot.types.Message):
-    """
-    Main handler for all incoming private text messages.
-    """
-    user_id = message.from_user.id
-    user_message = message.text
+# Register all handlers
+register_handlers(bot, last_owner_reply, owner_id_int, OWNER_AFK)
 
-    # Log the incoming message
-    logger.info(f"Received message from user {user_id}: '{user_message}'")
-    
-    # Do not respond to the owner of the bot
-    if user_id == owner_id_int:
-        logger.info("Message is from the owner. Ignoring.")
-        return
+# --- Ollama Integration ---
+def ollama_generate(prompt: str) -> str:
+    try:
+        response = requests.post(
+            OLLAMA_URL,
+            json={
+                "model": OLLAMA_MODEL,
+                "prompt": prompt,
+                "stream": False
+            },
+            timeout=60
+        )
+        response.raise_for_status()
+        result = response.json()
+        return result.get("response", "Sorry, I'm having trouble thinking right now.").strip()
+    except Exception as e:
+        logger.error(f"Ollama API error: {e}", exc_info=True)
+        return "Sorry, I'm having trouble thinking right now."
 
-    # Check if the owner is offline
-    if is_owner_online():
-        logger.info(f"Owner is online. Bot will not respond to user {user_id}.")
-        return
-
-    # Don't respond to own messages if the bot is in a group
-    if user_id == bot.get_me().id:
-        return
-
-    # Add a delay to simulate typing or thinking
-    logger.info(f"Waiting for {RESPONSE_DELAY_SECONDS} seconds before responding.")
-    time.sleep(RESPONSE_DELAY_SECONDS)
-
-    # Generate a response
-    bot.send_chat_action(message.chat.id, 'typing')
-    response_text = generate_response(user_id, user_message)
-
-    # Send the response
-    bot.reply_to(message, response_text)
-    logger.info(f"Sent response to user {user_id}: '{response_text}'")
-    
-    # Update chat history after sending the response
-    update_chat_history(user_id, user_message, response_text)
-
+# --- Generate Response ---
+def generate_response(user_id: int, chat_id: int, user_message: str) -> str:
+    context = get_context_for_ollama(user_id, chat_id, user_message)
+    logger.info(f"Sending context to Ollama for user {user_id}: '{context}'")
+    response = ollama_generate(context)
+    logger.info(f"Ollama response for user {user_id}: '{response}'")
+    return response
 
 # --- Main Execution ---
 if __name__ == "__main__":
     logger.info("Bot starting up...")
     if not owner_id_int:
         logger.warning("OWNER_USER_ID is not set. The bot will respond to all users.")
-    
-    try:
-        bot.polling(non_stop=True)
-    except Exception as e:
-        logger.critical(f"Bot crashed with error: {e}") 
+    init_db()
+    max_backoff = 300  # 5 minutes
+    backoff = 5
+    while True:
+        try:
+            logger.info("Starting the bot with infinity polling...")
+            bot.infinity_polling(timeout=60, long_polling_timeout=60)
+        except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectionError) as e:
+            logger.error(f"Network error during polling: {e}. Retrying in {backoff} seconds.")
+            time.sleep(backoff)
+            backoff = min(backoff * 2, max_backoff)
+        except Exception as e:
+            logger.critical(f"Unexpected error in polling: {e}", exc_info=True)
+            time.sleep(backoff)
+            backoff = min(backoff * 2, max_backoff)
+        else:
+            backoff = 5 

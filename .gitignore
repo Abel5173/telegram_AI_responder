@@ -11,3 +11,6 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd 
+
+# SQLite database
+chat_history.db 
