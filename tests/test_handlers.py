@@ -3,7 +3,11 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import unittest
 from unittest.mock import MagicMock
-from handlers import handle_afk_command, handle_back_command, handle_status_command
+from handlers import (
+    handle_afk_command,
+    handle_back_command,
+    handle_status_command,
+)
 
 
 class TestHandlers(unittest.TestCase):
@@ -21,7 +25,8 @@ class TestHandlers(unittest.TestCase):
         )
         self.assertTrue(self.OWNER_AFK[0])
         self.bot.reply_to.assert_called_with(
-            message, "AFK mode enabled. I'll cover your DMs after 15 seconds if you don't reply."
+            message,
+            "AFK mode enabled. I'll cover your DMs after 15 seconds if you don't reply."
         )
 
     def test_afk_command_non_owner(self):
