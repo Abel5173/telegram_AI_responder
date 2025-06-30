@@ -2,6 +2,7 @@ import requests
 from config import OLLAMA_URL, OLLAMA_MODEL, logger, MAX_HISTORY
 from db import get_last_n_messages
 
+
 def ollama_generate(prompt: str) -> str:
     """Send a prompt to Ollama and return the response."""
     try:
@@ -21,6 +22,7 @@ def ollama_generate(prompt: str) -> str:
         logger.error(f"Ollama API error: {e}", exc_info=True)
         return "Sorry, I'm having trouble thinking right now."
 
+
 def get_context_for_ollama(user_id, chat_id, user_message):
     """Format the last n messages as context for Ollama."""
     context_pairs = get_last_n_messages(user_id, chat_id, MAX_HISTORY)
@@ -30,6 +32,7 @@ def get_context_for_ollama(user_id, chat_id, user_message):
         context_parts.append(f"Bot: {bot_response}")
     context_parts.append(f"User: {user_message}")
     return "\n".join(context_parts)
+
 
 def generate_response(user_id: int, chat_id: int, user_message: str) -> str:
     """Generate a response using Ollama with context."""

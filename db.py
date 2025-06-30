@@ -2,6 +2,7 @@ import sqlite3
 from datetime import datetime, timezone
 from config import DB_PATH, logger, MAX_HISTORY
 
+
 def init_db():
     """Initialize the SQLite database and create the messages table if it doesn't exist."""
     try:
@@ -24,6 +25,7 @@ def init_db():
         logger.critical(f"Failed to initialize database: {e}", exc_info=True)
         raise
 
+
 def store_message(user_id, chat_id, sender, message_text, timestamp=None):
     """Store a message in the database."""
     try:
@@ -40,6 +42,7 @@ def store_message(user_id, chat_id, sender, message_text, timestamp=None):
         logger.info(f"Stored message for user {user_id} in chat {chat_id} as {sender}.")
     except Exception as e:
         logger.error(f"Failed to store message: {e}", exc_info=True)
+
 
 def get_last_n_messages(user_id, chat_id, n=MAX_HISTORY):
     """Retrieve the last n user/bot message pairs for context."""

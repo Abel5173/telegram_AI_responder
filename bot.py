@@ -187,7 +187,9 @@ if __name__ == "__main__":
             logger.info("Starting the bot with infinity polling...")
             bot.infinity_polling(timeout=60, long_polling_timeout=60)
         except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectionError) as e:
-            logger.error(f"Network error during polling: {e}. Retrying in {backoff} seconds.")
+            logger.error(
+                f"Network error during polling: {e}. Retrying in {backoff} seconds."
+            )
             time.sleep(backoff)
             backoff = min(backoff * 2, max_backoff)
         except Exception as e:

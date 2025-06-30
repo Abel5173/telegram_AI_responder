@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import MagicMock
 from handlers import handle_afk_command, handle_back_command, handle_status_command
 
+
 class TestHandlers(unittest.TestCase):
     def setUp(self):
         self.bot = MagicMock()
@@ -51,6 +52,7 @@ class TestHandlers(unittest.TestCase):
         self.bot.reply_to.assert_called_with(
             message, "Owner is currently online."
         )
+
 
 if __name__ == '__main__':
     unittest.main() 

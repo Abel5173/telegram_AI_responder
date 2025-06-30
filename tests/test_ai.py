@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import patch
 from ai import ollama_generate, get_context_for_ollama, generate_response
 
+
 class TestAI(unittest.TestCase):
     @patch('ai.requests.post')
     def test_ollama_generate_success(self, mock_post):
@@ -30,6 +31,7 @@ class TestAI(unittest.TestCase):
     def test_generate_response(self, mock_context, mock_ollama):
         response = generate_response(1, 1, "What's up?")
         self.assertEqual(response, "Ollama context reply")
+
 
 if __name__ == '__main__':
     unittest.main() 
