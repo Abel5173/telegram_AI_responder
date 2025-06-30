@@ -16,7 +16,9 @@ class TestHandlers(unittest.TestCase):
     def test_afk_command_owner(self):
         message = MagicMock()
         message.from_user.id = self.owner_id_int
-        handle_afk_command(message, self.bot, self.OWNER_AFK, self.owner_id_int)
+        handle_afk_command(
+            message, self.bot, self.OWNER_AFK, self.owner_id_int
+        )
         self.assertTrue(self.OWNER_AFK[0])
         self.bot.reply_to.assert_called_with(
             message, "AFK mode enabled. I'll cover your DMs after 15 seconds if you don't reply."
@@ -25,7 +27,9 @@ class TestHandlers(unittest.TestCase):
     def test_afk_command_non_owner(self):
         message = MagicMock()
         message.from_user.id = 999
-        handle_afk_command(message, self.bot, self.OWNER_AFK, self.owner_id_int)
+        handle_afk_command(
+            message, self.bot, self.OWNER_AFK, self.owner_id_int
+        )
         self.assertTrue(self.OWNER_AFK[0])
         self.bot.reply_to.assert_called_with(
             message, "Only the owner can use this command."
@@ -34,7 +38,9 @@ class TestHandlers(unittest.TestCase):
     def test_back_command_owner(self):
         message = MagicMock()
         message.from_user.id = self.owner_id_int
-        handle_back_command(message, self.bot, self.OWNER_AFK, self.owner_id_int)
+        handle_back_command(
+            message, self.bot, self.OWNER_AFK, self.owner_id_int
+        )
         self.assertFalse(self.OWNER_AFK[0])
         self.bot.reply_to.assert_called_with(
             message, "Welcome back! I won't auto-respond anymore."
