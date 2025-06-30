@@ -48,6 +48,7 @@ else:
     )
 
 # --- SQLite Chat History ---
+
 def store_message(user_id, chat_id, sender, message_text, timestamp=None):
     try:
         if timestamp is None:
@@ -69,6 +70,7 @@ def store_message(user_id, chat_id, sender, message_text, timestamp=None):
         logger.error(f"Failed to store message: {e}", exc_info=True)
 
 def get_last_n_messages(user_id, chat_id, n=MAX_HISTORY):
+
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
@@ -90,6 +92,7 @@ def get_last_n_messages(user_id, chat_id, n=MAX_HISTORY):
         user_msgs = []
         bot_msgs = []
         for sender, msg in rows:
+
             if sender == 'user':
                 user_msgs.append(msg)
             elif sender == 'bot':
@@ -111,6 +114,7 @@ def get_last_n_messages(user_id, chat_id, n=MAX_HISTORY):
         logger.error(f"Failed to fetch chat history: {e}", exc_info=True)
         return []
 
+
 def get_context_for_ollama(user_id, chat_id, user_message):
     context_pairs = get_last_n_messages(user_id, chat_id, MAX_HISTORY)
     context_parts = []
@@ -119,6 +123,7 @@ def get_context_for_ollama(user_id, chat_id, user_message):
         context_parts.append(f"Bot: {bot_response}")
     context_parts.append(f"User: {user_message}")
     return "\n".join(context_parts)
+
 
 # --- AFK Status and Owner Reply Tracking ---
 OWNER_AFK = [True]  # Use list for mutability in handlers
@@ -131,6 +136,7 @@ register_handlers(bot, last_owner_reply, owner_id_int, OWNER_AFK)
 # --- Ollama Integration ---
 def ollama_generate(prompt: str) -> str:
     try:
+
         response = requests.post(
             OLLAMA_URL,
             json={
@@ -142,8 +148,9 @@ def ollama_generate(prompt: str) -> str:
         )
         response.raise_for_status()
         result = response.json()
+
         return result.get(
-            "response", 
+            "response",
             "Sorry, I'm having trouble thinking right now."
         ).strip()
     except Exception as e:
@@ -153,6 +160,7 @@ def ollama_generate(prompt: str) -> str:
 # --- Generate Response ---
 def generate_response(user_id: int, chat_id: int, user_message: str) -> str:
     context = get_context_for_ollama(user_id, chat_id, user_message)
+
     logger.info(
         f"Sending context to Ollama for user {user_id}: '{context}'"
     )
@@ -164,6 +172,7 @@ def generate_response(user_id: int, chat_id: int, user_message: str) -> str:
 if __name__ == "__main__":
     logger.info("Bot starting up...")
     if not owner_id_int:
+
         logger.warning(
             "OWNER_USER_ID is not set. The bot will respond to all users."
         )
@@ -174,7 +183,7 @@ if __name__ == "__main__":
         try:
             logger.info("Starting the bot with infinity polling...")
             bot.infinity_polling(timeout=60, long_polling_timeout=60)
-        except (requests.exceptions.ReadTimeout, 
+        except (requests.exceptions.ReadTimeout,
                 requests.exceptions.ConnectionError) as e:
             logger.error(
                 f"Network error during polling: {e}. "
@@ -187,4 +196,4 @@ if __name__ == "__main__":
             time.sleep(backoff)
             backoff = min(backoff * 2, max_backoff)
         else:
-            backoff = 5 
+            backoff = 5

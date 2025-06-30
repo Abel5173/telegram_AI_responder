@@ -5,11 +5,12 @@ import threading
 import time
 import requests
 
+
 def handle_afk_command(message, bot, OWNER_AFK_ref, owner_id_int):
     if message.from_user.id == owner_id_int:
         OWNER_AFK_ref[0] = True
         bot.reply_to(
-            message, 
+            message,
             "AFK mode enabled. I'll cover your DMs after 15 seconds "
             "if you don't reply."
         )
@@ -17,20 +18,23 @@ def handle_afk_command(message, bot, OWNER_AFK_ref, owner_id_int):
     else:
         bot.reply_to(message, "Only the owner can use this command.")
 
+
 def handle_back_command(message, bot, OWNER_AFK_ref, owner_id_int):
     if message.from_user.id == owner_id_int:
         OWNER_AFK_ref[0] = False
         bot.reply_to(
-            message, 
+            message,
             "Welcome back! I won't auto-respond anymore."
         )
         logger.info("Owner set AFK mode OFF.")
     else:
         bot.reply_to(message, "Only the owner can use this command.")
 
+
 def handle_status_command(message, bot, OWNER_AFK_ref):
     status = "AFK" if OWNER_AFK_ref[0] else "online"
     bot.reply_to(message, f"Owner is currently {status}.")
+
 
 def handle_track_owner_reply(message, last_owner_reply, logger, owner_id_int):
     last_owner_reply[message.chat.id] = time.time()
@@ -39,8 +43,10 @@ def handle_track_owner_reply(message, last_owner_reply, logger, owner_id_int):
         f"{last_owner_reply[message.chat.id]}"
     )
 
+
 def owner_replied_recently(chat_id: int, since: float, last_owner_reply: dict) -> bool:
     return last_owner_reply.get(chat_id, 0) > since
+
 
 def handle_main_message(message, bot, last_owner_reply, owner_id_int, OWNER_AFK_ref):
     user_id = message.from_user.id
@@ -63,7 +69,7 @@ def handle_main_message(message, bot, last_owner_reply, owner_id_int, OWNER_AFK_
         def delayed_response():
             try:
                 time.sleep(15)
-                if not owner_replied_recently(chat_id, received_time, 
+                if not owner_replied_recently(chat_id, received_time,
                                             last_owner_reply):
                     logger.info(
                         f"No owner reply detected in chat {chat_id} after "
@@ -71,7 +77,7 @@ def handle_main_message(message, bot, last_owner_reply, owner_id_int, OWNER_AFK_
                     )
                     try:
                         bot.send_message(
-                            chat_id, 
+                            chat_id,
                             "Abel is not here for the moment, but till he is "
                             "online you can talk to me, like ask me anything...."
                         )
@@ -113,7 +119,7 @@ def handle_main_message(message, bot, last_owner_reply, owner_id_int, OWNER_AFK_
                     )
             except Exception as e:
                 logger.error(
-                    f"Unexpected error in delayed_response thread: {e}", 
+                    f"Unexpected error in delayed_response thread: {e}",
                     exc_info=True
                 )
         threading.Thread(target=delayed_response).start()
@@ -122,6 +128,7 @@ def handle_main_message(message, bot, last_owner_reply, owner_id_int, OWNER_AFK_
             f"OWNER_AFK is False. Bot will not auto-respond to user {user_id}."
         )
     # If not AFK, do nothing (owner will reply)
+
 
 def register_handlers(bot, last_owner_reply, owner_id_int, OWNER_AFK_ref):
     @bot.message_handler(commands=['afk'])
@@ -143,10 +150,10 @@ def register_handlers(bot, last_owner_reply, owner_id_int, OWNER_AFK_ref):
         )
 
     @bot.message_handler(
-        chat_types=['private'], 
+        chat_types=['private'],
         func=lambda message: True
     )
     def handle_message(message):
         handle_main_message(
             message, bot, last_owner_reply, owner_id_int, OWNER_AFK_ref
-        ) 
+        )
