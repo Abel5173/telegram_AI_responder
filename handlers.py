@@ -44,11 +44,15 @@ def handle_track_owner_reply(message, last_owner_reply, logger, owner_id_int):
     )
 
 
-def owner_replied_recently(chat_id: int, since: float, last_owner_reply: dict) -> bool:
+def owner_replied_recently(
+    chat_id: int, since: float, last_owner_reply: dict
+) -> bool:
     return last_owner_reply.get(chat_id, 0) > since
 
 
-def handle_main_message(message, bot, last_owner_reply, owner_id_int, OWNER_AFK_ref):
+def handle_main_message(
+    message, bot, last_owner_reply, owner_id_int, OWNER_AFK_ref
+):
     user_id = message.from_user.id
     chat_id = message.chat.id
     user_message = message.text
@@ -69,8 +73,9 @@ def handle_main_message(message, bot, last_owner_reply, owner_id_int, OWNER_AFK_
         def delayed_response():
             try:
                 time.sleep(15)
-                if not owner_replied_recently(chat_id, received_time,
-                                            last_owner_reply):
+                if not owner_replied_recently(
+                    chat_id, received_time, last_owner_reply
+                ):
                     logger.info(
                         f"No owner reply detected in chat {chat_id} after "
                         f"15 seconds. Sending intro and AI response."
@@ -79,7 +84,7 @@ def handle_main_message(message, bot, last_owner_reply, owner_id_int, OWNER_AFK_
                         bot.send_message(
                             chat_id,
                             "Abel is not here for the moment, but till he is "
-                            "online you can talk to me, like ask me anything...."
+                            "online you can talk to me, like ask me anything.."
                         )
                         logger.info(
                             f"Sent intro message to user {user_id} in "
