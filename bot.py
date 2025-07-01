@@ -47,8 +47,8 @@ else:
         "Bot will respond to all users."
     )
 
-# --- SQLite Chat History ---
 
+# --- SQLite Chat History ---
 def store_message(user_id, chat_id, sender, message_text, timestamp=None):
     try:
         if timestamp is None:
@@ -69,8 +69,8 @@ def store_message(user_id, chat_id, sender, message_text, timestamp=None):
     except Exception as e:
         logger.error(f"Failed to store message: {e}", exc_info=True)
 
-def get_last_n_messages(user_id, chat_id, n=MAX_HISTORY):
 
+def get_last_n_messages(user_id, chat_id, n=MAX_HISTORY):
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
@@ -81,7 +81,7 @@ def get_last_n_messages(user_id, chat_id, n=MAX_HISTORY):
             ORDER BY timestamp DESC, id DESC
             LIMIT ?
             """,
-            (user_id, chat_id, n * 2)  # Fetch more in case of alternating user/bot
+            (user_id, chat_id, n * 2)  # Fetch more for alternating user/bot
         )
         rows = c.fetchall()
         conn.close()
@@ -92,7 +92,6 @@ def get_last_n_messages(user_id, chat_id, n=MAX_HISTORY):
         user_msgs = []
         bot_msgs = []
         for sender, msg in rows:
-
             if sender == 'user':
                 user_msgs.append(msg)
             elif sender == 'bot':
@@ -133,10 +132,10 @@ last_owner_reply = {}
 # Register all handlers
 register_handlers(bot, last_owner_reply, owner_id_int, OWNER_AFK)
 
+
 # --- Ollama Integration ---
 def ollama_generate(prompt: str) -> str:
     try:
-
         response = requests.post(
             OLLAMA_URL,
             json={
@@ -148,7 +147,6 @@ def ollama_generate(prompt: str) -> str:
         )
         response.raise_for_status()
         result = response.json()
-
         return result.get(
             "response",
             "Sorry, I'm having trouble thinking right now."
@@ -157,10 +155,10 @@ def ollama_generate(prompt: str) -> str:
         logger.error(f"Ollama API error: {e}", exc_info=True)
         return "Sorry, I'm having trouble thinking right now."
 
+
 # --- Generate Response ---
 def generate_response(user_id: int, chat_id: int, user_message: str) -> str:
     context = get_context_for_ollama(user_id, chat_id, user_message)
-
     logger.info(
         f"Sending context to Ollama for user {user_id}: '{context}'"
     )
@@ -168,11 +166,11 @@ def generate_response(user_id: int, chat_id: int, user_message: str) -> str:
     logger.info(f"Ollama response for user {user_id}: '{response}'")
     return response
 
+
 # --- Main Execution ---
 if __name__ == "__main__":
     logger.info("Bot starting up...")
     if not owner_id_int:
-
         logger.warning(
             "OWNER_USER_ID is not set. The bot will respond to all users."
         )

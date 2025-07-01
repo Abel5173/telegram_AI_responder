@@ -4,7 +4,7 @@ from config import DB_PATH, logger, MAX_HISTORY
 
 
 def init_db():
-    """Initialize the SQLite database and create the messages table if it doesn't exist."""
+    """Initialize the SQLite database and create the messages table."""
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
