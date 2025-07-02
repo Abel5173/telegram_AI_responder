@@ -42,10 +42,22 @@ def huggingface_generate(prompt: str) -> str:
             provider="together",
             api_key=HUGGINGFACE_TOKEN,
         )
-        concise_prompt = "Answer concisely in 2-3 sentences. " + prompt
+        intro = (
+            "Hi, I am Abel's personal AI assistant. "
+            "Abel is not online at the moment, but you can talk to me about "
+            "general things, knowledge, or ask me anything until he gets back online.\n\n"
+        )
+        concise_prompt = (
+            intro + "Answer concisely in 2-3 sentences. " + prompt
+        )
         completion = client.chat.completions.create(
             model="deepseek-ai/DeepSeek-R1-0528",
-            messages=[{"role": "user", "content": concise_prompt}],
+            messages=[
+                {
+                    "role": "user",
+                    "content": concise_prompt,
+                }
+            ],
         )
         response = completion.choices[0].message.content
         # Remove <think>...</think> sections if present
@@ -99,7 +111,7 @@ def generate_response(
             logger.info(
                 f"{provider.capitalize()} response for user {user_id}: " f"'{response}'"
             )
-            return f"[{provider}] {response.strip()}"
+            return response.strip()
         else:
             logger.warning(
                 f"Provider {provider} failed or returned empty response.")
