@@ -5,13 +5,17 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-OWNER_USER_ID = os.getenv("OWNER_USER_ID")
-DB_PATH = "chat_history.db"
-OLLAMA_URL = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "llama3.1:8b"
-MAX_HISTORY = 3
-RESPONSE_DELAY_SECONDS = 15
+TELEGRAM_TOKEN: str = os.getenv("TELEGRAM_TOKEN", "")
+OWNER_USER_ID: str = os.getenv("OWNER_USER_ID", "")
+DB_PATH: str = "chat_history.db"
+OLLAMA_URL: str = "http://localhost:11434/api/generate"
+OLLAMA_MODEL: str = "llama3.1:8b"
+MAX_HISTORY: int = 3
+RESPONSE_DELAY_SECONDS: int = 1
+
+# AI Provider Configurations
+HUGGINGFACE_API_KEY: str = os.getenv("HUGGINGFACE_API_KEY", "")
+PROVIDER_ORDER: list[str] = os.getenv("PROVIDER_ORDER", "huggingface,ollama").split(",")
 
 # Logging configuration
 logging.basicConfig(

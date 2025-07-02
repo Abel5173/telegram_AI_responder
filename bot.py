@@ -9,6 +9,7 @@ from telebot import TeleBot
 from config import logger
 from db import init_db
 from handlers import register_handlers
+import traceback
 
 # --- Configuration ---
 # Load environment variables from .env file
@@ -177,21 +178,27 @@ if __name__ == "__main__":
     init_db()
     max_backoff = 300  # 5 minutes
     backoff = 5
-    while True:
-        try:
-            logger.info("Starting the bot with infinity polling...")
-            bot.infinity_polling(timeout=60, long_polling_timeout=60)
-        except (requests.exceptions.ReadTimeout,
-                requests.exceptions.ConnectionError) as e:
-            logger.error(
-                f"Network error during polling: {e}. "
-                f"Retrying in {backoff} seconds."
-            )
-            time.sleep(backoff)
-            backoff = min(backoff * 2, max_backoff)
-        except Exception as e:
-            logger.critical(f"Unexpected error in polling: {e}", exc_info=True)
-            time.sleep(backoff)
-            backoff = min(backoff * 2, max_backoff)
-        else:
-            backoff = 5
+    try:
+        while True:
+            try:
+                logger.info("Starting the bot with infinity polling...")
+                bot.infinity_polling(timeout=60, long_polling_timeout=60)
+            except (requests.exceptions.ReadTimeout,
+                    requests.exceptions.ConnectionError) as e:
+                logger.error(
+                    f"Network error during polling: {e}. "
+                    f"Retrying in {backoff} seconds.",
+                    exc_info=True
+                )
+                time.sleep(backoff)
+                backoff = min(backoff * 2, max_backoff)
+            except Exception as e:
+                logger.critical(f"Unexpected error in polling: {e}", exc_info=True)
+                traceback.print_exc()
+                print("\n[CRITICAL] The bot failed to start or crashed. Check the logs above for details.\n")
+                time.sleep(backoff)
+                backoff = min(backoff * 2, max_backoff)
+            else:
+                backoff = 5
+    except KeyboardInterrupt:
+        logger.info("Bot stopped by user (KeyboardInterrupt). Exiting gracefully.")

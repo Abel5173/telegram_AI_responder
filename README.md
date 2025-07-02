@@ -141,3 +141,40 @@ flake8 .
 
 ## License
 MIT 
+
+## AI Provider Support and Fallback
+
+The bot supports multiple AI providers with automatic fallback:
+- Hugging Face (Together, DeepSeek, etc.)
+- Ollama (local, as last fallback)
+
+The provider order can be set via the `PROVIDER_ORDER` environment variable (default: `huggingface,ollama`).
+
+### Required Environment Variables (.env)
+Create a `.env` file in the project root or use `.env.example` as a template:
+```dotenv
+TELEGRAM_TOKEN=your_telegram_bot_token
+OWNER_USER_ID=your_telegram_user_id
+HUGGINGFACE_API_KEY=your_huggingface_or_together_api_key
+# Optional overrides:
+# OLLAMA_URL=http://localhost:11434/api/generate
+# OLLAMA_MODEL=llama3.1:8b
+# PROVIDER_ORDER=huggingface,ollama
+```
+
+- Get your API keys from the respective provider dashboards.
+- Only the first available provider with a valid response will be used for each request.
+
+## Code Quality & Testing
+
+- Format code with [black](https://black.readthedocs.io/en/stable/):
+  ```bash
+  black .
+  ```
+- Run all tests and check coverage:
+  ```bash
+  pytest tests/
+  coverage run -m pytest
+  coverage report -m
+  ```
+- Aim for >90% test coverage for production deployments. 
