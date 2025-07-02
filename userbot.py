@@ -17,7 +17,7 @@ api_id = os.getenv("API_ID")         # <-- Enter your API ID here
 api_hash = os.getenv("API_HASH")     # <-- Enter your API hash here
 
 # This session file will be created on first run
-tg_session = 'userbot_session'
+tg_session = '/etc/secrets/userbot_session'
 
 client = TelegramClient(tg_session, api_id, api_hash)
 
