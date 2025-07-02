@@ -1,5 +1,6 @@
-import os
 import logging
+import os
+
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -15,7 +16,8 @@ RESPONSE_DELAY_SECONDS: int = 1
 
 # AI Provider Configurations
 HUGGINGFACE_API_KEY: str = os.getenv("HUGGINGFACE_API_KEY", "")
-PROVIDER_ORDER: list[str] = os.getenv("PROVIDER_ORDER", "huggingface,ollama").split(",")
+PROVIDER_ORDER: list[str] = os.getenv(
+    "PROVIDER_ORDER", "huggingface,ollama").split(",")
 
 # Logging configuration
 logging.basicConfig(

@@ -1,38 +1,46 @@
 import sqlite3
-from datetime import datetime, timezone
-from config import DB_PATH, logger, MAX_HISTORY
+
+from config import DB_PATH, logger
 
 
 def init_db() -> None:
-    """Initialize the SQLite database and create tables if they do not exist. Drops and recreates the messages table for a fresh schema."""
+    """Initialize the SQLite database and create tables if they do not exist.
+    Drops and recreates the messages table for a fresh schema.
+    """
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        cursor.execute('DROP TABLE IF EXISTS messages')
-        cursor.execute('''
-            CREATE TABLE messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
-                chat_id INTEGER,
-                message TEXT,
-                response TEXT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
+        cursor.execute("DROP TABLE IF EXISTS messages")
+        cursor.execute(
+            "CREATE TABLE messages ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "user_id INTEGER,"
+            "chat_id INTEGER,"
+            "message TEXT,"
+            "response TEXT,"
+            "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP"
+            ")"
+        )
         conn.commit()
         conn.close()
     except Exception as e:
         logger.error(f"Database initialization error: {e}")
 
 
-def store_message(user_id: int, chat_id: int, message: str, response: str) -> None:
+def store_message(
+    user_id: int,
+    chat_id: int,
+    message: str,
+    response: str,
+) -> None:
     """Store a user message and bot response in the database."""
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO messages (user_id, chat_id, message, response) VALUES (?, ?, ?, ?)",
-            (user_id, chat_id, message, response)
+            "INSERT INTO messages (user_id, chat_id, message, response) "
+            "VALUES (?, ?, ?, ?)",
+            (user_id, chat_id, message, response),
         )
         conn.commit()
         conn.close()
@@ -40,14 +48,20 @@ def store_message(user_id: int, chat_id: int, message: str, response: str) -> No
         logger.error(f"Error storing message: {e}")
 
 
-def get_last_n_messages(user_id: int, chat_id: int, n: int) -> list[tuple[str, str]]:
+def get_last_n_messages(
+    user_id: int,
+    chat_id: int,
+    n: int,
+) -> list[tuple[str, str]]:
     """Retrieve the last n user/bot message pairs for a given user and chat."""
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT message, response FROM messages WHERE user_id = ? AND chat_id = ? ORDER BY id DESC LIMIT ?",
-            (user_id, chat_id, n)
+            "SELECT message, response FROM messages "
+            "WHERE user_id = ? AND chat_id = ? "
+            "ORDER BY id DESC LIMIT ?",
+            (user_id, chat_id, n),
         )
         rows = cursor.fetchall()
         conn.close()

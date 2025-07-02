@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 import unittest
 from unittest.mock import MagicMock
 from handlers import (
@@ -7,12 +7,14 @@ from handlers import (
     handle_back_command,
     handle_status_command,
 )
+
 sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')
+    os.path.join(os.path.dirname(__file__), "..")
 ))
 
 
 class TestHandlers(unittest.TestCase):
+
     def setUp(self):
         self.bot = MagicMock()
         self.last_owner_reply = {}
@@ -51,7 +53,8 @@ class TestHandlers(unittest.TestCase):
         )
         self.assertFalse(self.OWNER_AFK[0])
         self.bot.reply_to.assert_called_with(
-            message, "Welcome back! I won't auto-respond anymore."
+            message,
+            "Welcome back! I won't auto-respond anymore."
         )
 
     def test_status_command(self):
@@ -68,5 +71,5 @@ class TestHandlers(unittest.TestCase):
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
