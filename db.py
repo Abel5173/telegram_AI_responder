@@ -69,3 +69,19 @@ def get_last_n_messages(
     except Exception as e:
         logger.error(f"Error retrieving messages: {e}")
         return []
+
+
+def is_new_user(user_id: int) -> bool:
+    """Return True if the user has no messages in the database."""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT 1 FROM messages WHERE user_id = ? LIMIT 1", (user_id,)
+        )
+        result = cursor.fetchone()
+        conn.close()
+        return result is None
+    except Exception as e:
+        logger.error(f"Error checking if user is new: {e}")
+        return True  # Assume new if error

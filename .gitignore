@@ -14,3 +14,8 @@ __pycache__/
 
 # SQLite database
 chat_history.db 
+
+*.sqlite3
+*.db
+*.env
+*.session
