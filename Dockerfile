@@ -1,23 +1,25 @@
-# Use official Python image
+# Use the latest Python 3.12 slim image
 FROM python:3.12-slim
 
 # Set work directory
 WORKDIR /app
 
-# Install system dependencies (if needed)
+# Install system dependencies (if needed for Telethon, SQLite, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt ./
+# Copy only requirements first for caching
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all source code
-COPY . .
+# Copy the rest of the code
+COPY userbot.py ai.py db.py config.py README.md ./
 
-# Set environment variables (can be overridden at runtime)
-ENV PYTHONUNBUFFERED=1
+# Copy .env if present (for local dev; in production, use --env-file or secrets)
+# COPY .env .
 
-# Entrypoint
-CMD ["python", "bot.py"] 
+# Expose no ports (userbot is not a web server)
+
+# Default command
+CMD ["python", "userbot.py"] 

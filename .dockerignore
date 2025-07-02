@@ -1,23 +1,34 @@
-# Byte-compiled / optimized / DLL files
+# Ignore Python cache and venv
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.venv/
+
+# Ignore git and local dev files
+.git/
+.gitignore
+.dockerignore
+
+# Ignore local database and session files
+chat_history.db
+userbot_session.session
+.env
+.env.*
+
+# Ignore tests and docs
+*.md
+/tests/
 
 # Virtual environment
-.venv/
 venv/
 env/
 
 # Environment variables
 .env
 
-# SQLite database
-chat_history.db
-
 # Test files
 *.test
 *.spec
-*.md
 *.log
 test_*.py 
