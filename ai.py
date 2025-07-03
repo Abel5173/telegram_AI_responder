@@ -11,6 +11,8 @@ from db import get_last_n_messages
 load_dotenv()
 
 HUGGINGFACE_TOKEN = os.getenv("HF_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct")
 
 
 def ollama_generate(prompt: str) -> str:
@@ -73,6 +75,44 @@ def huggingface_generate(prompt: str) -> str:
         return None
 
 
+def groq_generate(prompt: str) -> str:
+    """Send a prompt to Groq API and return the response."""
+    try:
+        url = "https://api.groq.com/openai/v1/chat/completions"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+        }
+        system_message = (
+            "You are Abel's personal AI assistant, acting as Abel when he is away. "
+            "Your job is to keep users engaged in interesting, meaningful, and human-like conversations. "
+            "Always use the provided conversation history to maintain context, remember details, and refer to previous messages. "
+            "Be proactive: ask follow-up questions, show curiosity, and make the user feel heard. "
+            "Be precise, avoid generic or vague answers, and tailor your responses to the user's interests and the ongoing topic. "
+            "If an emoji or GIF would enhance your reply (for humor, emotion, or emphasis), add [EMOJI: ...] or [GIF: ...] at the end—otherwise, do not include these tags. "
+            "Never mention that you are an AI or that Abel is away unless asked directly. "
+            "Keep replies concise, friendly, and engaging."
+        )
+        data = {
+            "model": GROQ_MODEL,
+            "messages": [
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": prompt}
+            ]
+        }
+        response = requests.post(url, headers=headers, json=data, timeout=60)
+        response.raise_for_status()
+        result = response.json()
+        # Groq returns OpenAI-compatible response
+        content = result["choices"][0]["message"]["content"]
+        # Remove <think>...</think> sections if present
+        content = re.sub(r"<think>[\s\S]*?</think>", "", content, flags=re.IGNORECASE).strip()
+        return content
+    except Exception as e:
+        logger.error(f"Groq API error: {e}")
+        return None
+
+
 def get_context_for_ollama(
     user_id: int,
     chat_id: int,
@@ -98,6 +138,7 @@ def generate_response(
     logger.info(
         f"Sending context to AI providers for user {user_id}: '" f"{context}'")
     provider_funcs = {
+        "groq": groq_generate,
         "ollama": ollama_generate,
         "huggingface": huggingface_generate,
     }

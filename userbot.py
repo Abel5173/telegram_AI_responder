@@ -1,7 +1,7 @@
 from telethon import TelegramClient, events
 import os
 from dotenv import load_dotenv
-from ai import huggingface_generate, ollama_generate
+from ai import generate_response
 from db import get_last_n_messages, store_message, init_db, is_new_user
 from config import MAX_HISTORY
 import re
@@ -17,7 +17,7 @@ api_id = os.getenv("API_ID")         # <-- Enter your API ID here
 api_hash = os.getenv("API_HASH")     # <-- Enter your API hash here
 
 # This session file will be created on first run
-tg_session = '/etc/secrets/userbot_session'
+tg_session = 'userbot_session'
 
 client = TelegramClient(tg_session, api_id, api_hash)
 
@@ -102,11 +102,7 @@ async def handler(event):
             )
 
         # Try Hugging Face first, then Ollama
-        response = huggingface_generate(prompt)
-        if not response:
-            response = ollama_generate(prompt)
-        if not response:
-            response = f"Sorry {name}, I'm having trouble thinking right now."
+        response = generate_response(user_id, chat_id, user_message=prompt)
 
         # Parse AI response for emoji and GIF
         def parse_ai_response(ai_response):

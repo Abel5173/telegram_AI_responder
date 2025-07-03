@@ -16,8 +16,10 @@ RESPONSE_DELAY_SECONDS: int = 1
 
 # AI Provider Configurations
 HUGGINGFACE_API_KEY: str = os.getenv("HUGGINGFACE_API_KEY", "")
+GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
+GROQ_MODEL: str = os.getenv("GROQ_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct")
 PROVIDER_ORDER: list[str] = os.getenv(
-    "PROVIDER_ORDER", "huggingface,ollama").split(",")
+    "PROVIDER_ORDER", "groq,huggingface,ollama").split(",")
 
 # Logging configuration
 logging.basicConfig(

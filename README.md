@@ -14,7 +14,7 @@ A modern, production-ready Telegram userbot that uses Hugging Face and Ollama fo
 - **Persistent Chat History:**
   - All messages are stored in SQLite (`chat_history.db`).
 - **Provider Fallback:**
-  - Uses Hugging Face (Together, DeepSeek, etc.) and Ollama (local) with automatic fallback.
+  - Uses Groq (Llama-4-Scout), Hugging Face (Together, DeepSeek, etc.), and Ollama (local) with automatic fallback.
 - **Modern Python:**
   - Type hints, environment-based config, and robust error handling.
 
@@ -41,6 +41,10 @@ Create a `.env` file in the project root:
 API_ID=your_telegram_api_id
 API_HASH=your_telegram_api_hash
 HUGGINGFACE_API_KEY=your_huggingface_or_together_api_key
+# Groq API (recommended primary)
+GROQ_API_KEY=your_groq_api_key
+# Optional: override default model
+GROQ_MODEL=meta-llama/llama-4-scout-17b-16e-instruct
 # Optional: OLLAMA_URL, OLLAMA_MODEL, PROVIDER_ORDER
 ```
 - Get your API ID and hash from [my.telegram.org](https://my.telegram.org).
@@ -79,7 +83,7 @@ docker run --env-file .env telegram-userbot
 
 **Or with inline variables:**
 ```bash
-docker run -e API_ID=xxx -e API_HASH=xxx -e HUGGINGFACE_API_KEY=xxx telegram-userbot
+docker run -e API_ID=xxx -e API_HASH=xxx -e HUGGINGFACE_API_KEY=xxx -e GROQ_API_KEY=xxx -e GROQ_MODEL=xxx telegram-userbot
 ```
 
 - The database (`chat_history.db`) will be created inside the container. To persist it, mount a volume:
@@ -104,10 +108,11 @@ docker run --env-file .env -v $(pwd)/chat_history.db:/app/chat_history.db telegr
 API_ID=your_telegram_api_id
 API_HASH=your_telegram_api_hash
 HUGGINGFACE_API_KEY=your_huggingface_or_together_api_key
-# Optional:
-# OLLAMA_URL=http://localhost:11434/api/generate
-# OLLAMA_MODEL=llama3.1:8b
-# PROVIDER_ORDER=huggingface,ollama
+# Groq API (recommended primary)
+GROQ_API_KEY=your_groq_api_key
+# Optional: override default model
+GROQ_MODEL=meta-llama/llama-4-scout-17b-16e-instruct
+# Optional: OLLAMA_URL, OLLAMA_MODEL, PROVIDER_ORDER
 ```
 
 ---
